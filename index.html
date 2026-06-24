@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ko'zgu</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0a12; --surface:#12121e; --surface2:#1a1a2e; --border:#2a2a45;
+  --accent:#8b5cf6; --accent2:#c4b5fd; --accent-glow:rgba(139,92,246,0.25);
+  --silver:#a8a8c0; --text:#e8e8f0; --text-dim:#6b6b8a;
+  --user-bg:#1e1b4b; --ai-bg:#16162a; --danger:#f87171; --success:#34d399;
+}
+html,body { height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
+#app { height:100vh; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+.screen { position:absolute; inset:0; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity 0.4s ease,transform 0.4s ease; transform:translateY(20px); }
+.screen.active { opacity:1; pointer-events:all; transform:translateY(0); }
+
+/* WELCOME */
+#welcome { align-items:center; justify-content:center; padding:32px 24px; text-align:center; background:radial-gradient(ellipse at 50% 30%,rgba(139,92,246,0.12) 0%,transparent 70%); }
+.mirror-wrap { position:relative; width:140px; height:180px; margin:0 auto 32px; }
+.mirror-frame { width:100%; height:100%; border-radius:50% 50% 46% 46%/60% 60% 40% 40%; border:2px solid var(--border); background:linear-gradient(160deg,#1a1a2e 0%,#0a0a18 100%); position:relative; overflow:hidden; box-shadow:0 0 40px rgba(139,92,246,0.15),inset 0 1px 0 rgba(255,255,255,0.05); }
+.mirror-shimmer { position:absolute; top:15%; left:15%; width:30%; height:40%; background:linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 100%); border-radius:50%; }
+.mirror-text-inside { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:48px; filter:drop-shadow(0 0 12px rgba(139,92,246,0.6)); animation:pulse-glow 3s ease-in-out infinite; }
+@keyframes pulse-glow { 0%,100%{filter:drop-shadow(0 0 10px rgba(139,92,246,0.5))} 50%{filter:drop-shadow(0 0 22px rgba(139,92,246,0.9))} }
+.mirror-stand { position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); width:40px; height:14px; background:var(--border); border-radius:0 0 8px 8px; }
+.welcome-title { font-size:28px; font-weight:700; letter-spacing:4px; color:var(--accent2); text-transform:uppercase; margin-bottom:8px; }
+.welcome-sub { font-size:13px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:32px; }
+.welcome-desc { font-size:15px; color:var(--silver); line-height:1.7; max-width:300px; margin:0 auto 32px; }
+.welcome-desc em { color:var(--accent2); font-style:normal; }
+.btn-primary { background:linear-gradient(135deg,var(--accent) 0%,#7c3aed 100%); color:#fff; border:none; border-radius:16px; padding:16px 40px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 4px 24px rgba(139,92,246,0.4); transition:transform 0.15s,box-shadow 0.15s; width:100%; max-width:280px; font-family:inherit; }
+.btn-primary:active { transform:scale(0.97); }
+.lang-toggle { display:flex; gap:8px; margin-bottom:16px; }
+.lang-btn { flex:1; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text-dim); font-size:13px; cursor:pointer; transition:all 0.2s; max-width:130px; font-family:inherit; }
+.lang-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(139,92,246,0.1); }
+
+/* CHAT */
+#chat { background:var(--bg); }
+.chat-header { display:flex; align-items:center; gap:12px; padding:14px 16px 12px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+.chat-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#7c3aed); display:flex; align-items:center; justify-content:center; font-size:18px; }
+.chat-header-info h2 { font-size:16px; font-weight:600; }
+.chat-status { font-size:11px; color:var(--success); display:flex; align-items:center; gap:4px; }
+.status-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.stage-indicator { margin-left:auto; font-size:11px; color:var(--text-dim); text-align:right; line-height:1.4; }
+.messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; }
+.messages::-webkit-scrollbar { width:3px; }
+.messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.msg { max-width:82%; display:flex; flex-direction:column; gap:4px; animation:msg-in 0.3s ease forwards; }
+@keyframes msg-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { align-self:flex-end; align-items:flex-end; }
+.msg.ai { align-self:flex-start; align-items:flex-start; }
+.bubble { padding:12px 16px; border-radius:18px; font-size:15px; line-height:1.6; word-wrap:break-word; }
+.msg.user .bubble { background:var(--user-bg); border-bottom-right-radius:4px; color:#c4b5fd; }
+.msg.ai .bubble { background:var(--ai-bg); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.msg.ai .bubble em { color:var(--accent2); font-style:normal; font-weight:500; }
+.msg-time { font-size:10px; color:var(--text-dim); padding:0 4px; }
+.typing-bubble { display:flex; align-items:center; gap:5px; padding:14px 18px; }
+.typing-dot { width:7px; height:7px; background:var(--text-dim); border-radius:50%; animation:typing 1.2s infinite; }
+.typing-dot:nth-child(2){animation-delay:0.2s} .typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
+.mirror-moment { background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(124,58,237,0.08)) !important; border-color:rgba(139,92,246,0.4) !important; position:relative; overflow:hidden; }
+.mirror-moment::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); }
+.chat-input-wrap { padding:12px 16px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; flex-shrink:0; }
+.chat-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:12px 16px; color:var(--text); font-size:15px; resize:none; outline:none; line-height:1.4; max-height:120px; overflow-y:auto; font-family:inherit; transition:border-color 0.2s; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-input::placeholder { color:var(--text-dim); }
+.send-btn { width:44px; height:44px; border-radius:50%; background:var(--accent); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s,transform 0.15s; }
+.send-btn:active{transform:scale(0.92)} .send-btn:disabled{background:var(--border);cursor:default}
+.send-btn svg { width:20px; height:20px; fill:white; }
+
+/* TASKS */
+#tasks { overflow-y:auto; }
+.tasks-header { padding:24px 20px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+.tasks-header h2 { font-size:20px; font-weight:700; color:var(--accent2); margin-bottom:4px; }
+.tasks-header p { font-size:13px; color:var(--text-dim); }
+.tasks-body { padding:20px 16px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1; }
+.insight-card { background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(124,58,237,0.06)); border:1px solid rgba(139,92,246,0.3); border-radius:16px; padding:16px; position:relative; overflow:hidden; }
+.insight-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); }
+.insight-label { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--accent); margin-bottom:8px; }
+.insight-text { font-size:15px; line-height:1.6; }
+.task-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; transition:border-color 0.2s; }
+.task-card.done { border-color:var(--success); opacity:0.7; }
+.task-type { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.task-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.task-icon.daily{background:rgba(139,92,246,0.15)} .task-icon.action{background:rgba(251,146,60,0.15)} .task-icon.reflect{background:rgba(52,211,153,0.15)}
+.task-type-label { font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); }
+.task-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+.task-desc { font-size:13px; color:var(--silver); line-height:1.6; margin-bottom:12px; }
+.task-done-btn { width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:10px; color:var(--text-dim); font-size:13px; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.task-done-btn:hover { border-color:var(--success); color:var(--success); }
+.task-card.done .task-done-btn { border-color:var(--success); color:var(--success); background:rgba(52,211,153,0.05); }
+.progress-section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; }
+.progress-label { display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); margin-bottom:10px; }
+.progress-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:3px; transition:width 0.6s ease; }
+.btn-secondary { width:100%; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:14px; color:var(--text-dim); font-size:14px; cursor:pointer; font-family:inherit; transition:all 0.2s; margin-bottom:80px; }
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent2); }
+
+/* NAV */
+#nav { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; padding-bottom:env(safe-area-inset-bottom,0); z-index:100; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+#nav.visible { opacity:1; pointer-events:all; }
+.nav-btn { flex:1; padding:12px 8px 10px; background:transparent; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-dim); font-size:10px; font-family:inherit; transition:color 0.2s; }
+.nav-btn.active { color:var(--accent2); }
+.nav-icon { font-size:22px; line-height:1; }
+
+/* PROFILE */
+#profile { overflow-y:auto; padding-bottom:80px; }
+.profile-header { padding:32px 20px 20px; text-align:center; background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.1) 0%,transparent 70%); border-bottom:1px solid var(--border); }
+.profile-emoji { font-size:52px; margin-bottom:12px; }
+.profile-name { font-size:20px; font-weight:700; margin-bottom:4px; }
+.profile-type { font-size:13px; color:var(--accent2); letter-spacing:1px; text-transform:uppercase; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:center; }
+.stat-number { font-size:28px; font-weight:700; color:var(--accent2); }
+.stat-label { font-size:11px; color:var(--text-dim); margin-top:4px; }
+.trait-section { padding:0 16px 16px; }
+.section-title { font-size:13px; text-transform:uppercase; letter-spacing:2px; color:var(--text-dim); margin-bottom:12px; padding-top:8px; }
+.trait-bar-wrap { margin-bottom:12px; }
+.trait-bar-label { display:flex; justify-content:space-between; font-size:13px; color:var(--silver); margin-bottom:6px; }
+.trait-bar { height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+.trait-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+.trait-fill.v{background:#60a5fa} .trait-fill.g{background:#f87171} .trait-fill.h{background:#34d399} .trait-fill.w{background:#fbbf24}
+
+/* SETTINGS MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-sheet { background:var(--surface); border-radius:20px 20px 0 0; padding:28px 24px 36px; width:100%; border-top:1px solid var(--border); }
+.modal-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+.modal-sub { font-size:13px; color:var(--text-dim); margin-bottom:20px; line-height:1.6; }
+.modal-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; color:var(--text); font-size:14px; font-family:inherit; outline:none; margin-bottom:12px; }
+.modal-input:focus { border-color:var(--accent); }
+.modal-row { display:flex; gap:10px; }
+.ai-badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 10px; border-radius:20px; cursor:pointer; }
+.ai-badge.demo { background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); }
+.ai-badge.real { background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); }
+.settings-icon-btn { background:none; border:none; cursor:pointer; font-size:18px; padding:4px 2px; opacity:0.5; transition:opacity 0.2s; }
+.settings-icon-btn:hover { opacity:1; }
+.modal-clear { background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:8px 0; text-align:center; width:100%; margin-top:8px; font-family:inherit; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- WELCOME -->
+<div id="welcome" class="screen active">
+  <div class="mirror-wrap">
+    <div class="mirror-frame">
+      <div class="mirror-shimmer"></div>
+      <div class="mirror-text-inside">🪞</div>
+    </div>
+    <div class="mirror-stand"></div>
+  </div>
+  <h1 class="welcome-title">Ko'zgu</h1>
+  <p class="welcome-sub">O'zingni ko'r</p>
+  <p class="welcome-desc">
+    Bu yerda savollar yo'q — faqat <em>suhbat</em>.<br>
+    Men seni ko'raman. Tan olmagan <em>tomonlaringni</em> ochaman.<br>
+    Va o'sishga <em>yo'l</em> ko'rsataman.
+  </p>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('uz',this)">🇺🇿 O'zbek</button>
+    <button class="lang-btn" onclick="setLang('ru',this)">🇷🇺 Русский</button>
+  </div>
+  <button class="btn-primary" onclick="startJourney()">Suhbatni boshlash →</button>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="screen">
+  <div class="chat-header">
+    <div class="chat-avatar">🪞</div>
+    <div class="chat-header-info">
+      <h2>Ko'zgu</h2>
+      <div class="chat-status"><span class="status-dot"></span><span id="status-text">Tayyor</span></div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <span class="ai-badge demo" id="ai-mode-badge" onclick="openSettings()">◈ Demo</span>
+      <div class="stage-indicator" id="stage-indicator">Bosqich 1/4<br>Tanishuv</div>
+      <button class="settings-icon-btn" onclick="openSettings()" title="AI sozlamalari">⚙️</button>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="chat-input-wrap">
+    <textarea class="chat-input" id="chat-input" placeholder="Nima his qilyapsan?.." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- TASKS -->
+<div id="tasks" class="screen">
+  <div class="tasks-header">
+    <h2>🌱 Bugungi vazifalar</h2>
+    <p id="tasks-date">Sening yo'ling boshlanmoqda</p>
+  </div>
+  <div class="tasks-body" id="tasks-body"></div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile" class="screen">
+  <div class="profile-header">
+    <div class="profile-emoji" id="profile-emoji">🌀</div>
+    <div class="profile-name" id="profile-name">Ko'zgu foydalanuvchisi</div>
+    <div class="profile-type" id="profile-type">Tahlil kutilmoqda</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-number" id="stat-sessions">0</div><div class="stat-label">Suhbatlar</div></div>
+    <div class="stat-card"><div class="stat-number" id="stat-tasks">0</div><div class="stat-label">Bajarilgan</div></div>
+    <div class="stat-card"><div class="stat-number" id="stat-days">0</div><div class="stat-label">Kunlar</div></div>
+    <div class="stat-card"><div class="stat-number" id="stat-streak">🔥 0</div><div class="stat-label">Ketma-ket</div></div>
+  </div>
+  <div class="trait-section">
+    <div class="section-title">Xususiyatlar tahlili</div>
+    <div class="trait-bar-wrap"><div class="trait-bar-label"><span>Olqishga bog'liqlik</span><span id="v-pct">—</span></div><div class="trait-bar"><div class="trait-fill v" id="v-bar" style="width:0%"></div></div></div>
+    <div class="trait-bar-wrap"><div class="trait-bar-label"><span>Yashirin kibr</span><span id="g-pct">—</span></div><div class="trait-bar"><div class="trait-fill g" id="g-bar" style="width:0%"></div></div></div>
+    <div class="trait-bar-wrap"><div class="trait-bar-label"><span>Sog'lom ishonch</span><span id="h-pct">—</span></div><div class="trait-bar"><div class="trait-fill h" id="h-bar" style="width:0%"></div></div></div>
+    <div class="trait-bar-wrap"><div class="trait-bar-label"><span>Ichki yara</span><span id="w-pct">—</span></div><div class="trait-bar"><div class="trait-fill w" id="w-bar" style="width:0%"></div></div></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal" onclick="closeSettingsOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">🤖 AI sozlamalari</div>
+    <div class="modal-sub" id="settings-sub">OpenAI API key kiriting. Real AI bilan suhbat yanada chuqurroq bo'ladi. Kalit faqat sizning qurilmangizda saqlanadi.</div>
+    <input class="modal-input" type="password" id="api-key-input" placeholder="sk-proj-..." autocomplete="off" />
+    <div class="modal-row">
+      <button class="btn-secondary" onclick="closeSettings()" style="flex:1">Bekor qilish</button>
+      <button class="btn-primary" style="max-width:none;flex:1" onclick="saveApiKey()">Saqlash ✓</button>
+    </div>
+    <button class="modal-clear" onclick="clearApiKey()" id="clear-key-btn" style="display:none">🗑 Keyni o'chirish</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nav-btn active" onclick="showScreen('chat')" id="nav-chat"><span class="nav-icon">💬</span><span>Suhbat</span></button>
+  <button class="nav-btn" onclick="showScreen('tasks')" id="nav-tasks"><span class="nav-icon">✅</span><span>Vazifalar</span></button>
+  <button class="nav-btn" onclick="showScreen('profile')" id="nav-profile"><span class="nav-icon">🪞</span><span>Profil</span></button>
+</nav>
+</div>
+
+<script>
+const BACKEND_URL = 'http://localhost:8000';
+
+// OpenAI direct integration
+let openaiKey = localStorage.getItem('kozgu_openai_key') || '';
+let conversationHistory = [];
+
+const SYSTEM_PROMPT = {
+uz:`Sen "Ko'zgu" — psixologik yo'ldosh. Foydalanuvchi bilan chuqur, samimiy suhbat qurasiz.
+
+QOIDALAR:
+- Har xabarda FAQAT BITTA savol ber
+- Maslahat BERMA — faqat savol ber
+- 2-4 qator, qisqa va chuqur
+- Foydalanuvchi his-tuyg'ularini kuzat (g'azab, qayg'u, qo'rquv, yolg'izlik, uyat, kibr)
+
+BOSQICHLAR (8 xabar):
+1-2: Hozirgi his haqida savol — muhokama qilmay, faqat tinglaysan
+3-4: Qachon, qayerda bu his kuchliroq? Qaysi munosabatlarda?
+5-6: Bolalilik, ota-ona, birinchi xotira
+7: Eng chuqur ko'zgu savol — devorning narigi tomonida nima?
+8: Yakunlov + TASKS JSON:
+---TASKS---
+{"emotion":"anger|sadness|fear|loneliness|shame|pride","insight":"bir jumlada ko'zgu moment uz tilda"}
+---END---`,
+
+ru:`Ты "Ko'zgu" — психологический спутник. Глубокий, искренний диалог.
+
+ПРАВИЛА:
+- В каждом сообщении ТОЛЬКО ОДИН вопрос
+- НЕ давай советов — только спрашивай
+- 2-4 строки, кратко и глубоко
+- Следи за эмоциями (злость, грусть, страх, одиночество, стыд, гордость)
+
+ЭТАПЫ (8 сообщений):
+1-2: Вопрос о текущем состоянии — слушаешь, не оцениваешь
+3-4: Когда, где это сильнее? В каких отношениях?
+5-6: Детство, родители, первые воспоминания
+7: Самый глубокий зеркальный вопрос
+8: Завершение + JSON:
+---TASKS---
+{"emotion":"anger|sadness|fear|loneliness|shame|pride","insight":"зеркальный момент одной фразой на русском"}
+---END---`
+};
+
+function openSettings(){
+  const modal=document.getElementById('settings-modal');
+  const inp=document.getElementById('api-key-input');
+  const sub=document.getElementById('settings-sub');
+  const clearBtn=document.getElementById('clear-key-btn');
+  inp.value='';
+  if(openaiKey){
+    sub.innerHTML='<span style="color:var(--success)">✅ Real AI ulangan.</span> Kalit saqlangan — almashtirish uchun yangi key kiriting.';
+    clearBtn.style.display='block';
+  } else {
+    sub.textContent='OpenAI API key kiriting. Real AI bilan suhbat yanada chuqurroq bo\'ladi. Kalit faqat sizning qurilmangizda saqlanadi.';
+    clearBtn.style.display='none';
+  }
+  modal.classList.add('open');
+  setTimeout(()=>inp.focus(),150);
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function closeSettingsOutside(e){if(e.target===document.getElementById('settings-modal'))closeSettings();}
+
+function saveApiKey(){
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key){closeSettings();return;}
+  if(!key.startsWith('sk-')){alert('Noto\'g\'ri format. Key "sk-" bilan boshlanishi kerak.');return;}
+  openaiKey=key;
+  localStorage.setItem('kozgu_openai_key',key);
+  conversationHistory=[];
+  updateAIBadge();
+  closeSettings();
+  if(tg?.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+}
+function clearApiKey(){
+  if(!confirm('API keyni o\'chirishni xohlaysizmi?'))return;
+  openaiKey='';
+  localStorage.removeItem('kozgu_openai_key');
+  conversationHistory=[];
+  updateAIBadge();
+  closeSettings();
+}
+function updateAIBadge(){
+  const b=document.getElementById('ai-mode-badge');
+  if(!b)return;
+  if(openaiKey){b.textContent='✦ Real AI';b.className='ai-badge real';}
+  else{b.textContent='◈ Demo';b.className='ai-badge demo';}
+}
+
+async function callOpenAI(userMsg){
+  conversationHistory.push({role:'user',content:userMsg});
+  const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+    body:JSON.stringify({
+      model:'gpt-4o-mini',
+      messages:[{role:'system',content:SYSTEM_PROMPT[state.lang]||SYSTEM_PROMPT.uz},...conversationHistory],
+      max_tokens:350,
+      temperature:0.88
+    })
+  });
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    throw new Error(err?.error?.message||'HTTP '+resp.status);
+  }
+  const data=await resp.json();
+  const aiText=data.choices[0].message.content.trim();
+  conversationHistory.push({role:'assistant',content:aiText});
+  return aiText;
+}
+
+function parseAIResponse(rawText){
+  const taskMatch=rawText.match(/---TASKS---\s*([\s\S]*?)\s*---END---/);
+  if(!taskMatch)return{text:rawText,hasTasks:false};
+  try{
+    const parsed=JSON.parse(taskMatch[1].trim());
+    const emotion=parsed.emotion||'loneliness';
+    state.insight=parsed.insight||getInsight();
+    state.emotionalThemes[emotion]=(state.emotionalThemes[emotion]||0)+5;
+    const cleanText=rawText.replace(/---TASKS---[\s\S]*?---END---/,'').trim();
+    return{text:cleanText,hasTasks:true};
+  }catch(e){return{text:rawText,hasTasks:false};}
+}
+
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor?.('#0a0a12');tg.setBackgroundColor?.('#0a0a12');}
+const tgUser = tg?.initDataUnsafe?.user;
+const userId = tgUser?.id || 'demo_' + Math.random().toString(36).slice(2,8);
+const userName = tgUser?.first_name || "Do'st";
+
+let state = {
+  lang:'uz', stage:1, messageCount:0,
+  emotionalThemes:{}, scores:{V:0,G:0,H:0,W:0},
+  tasks:[], insight:'', aiWaiting:false,
+};
+
+const DEMO_FLOW = {
+  uz:[
+    [`Salom, ${userName}. Men Ko'zgu.\n\nSen menga qaraysan — lekin men *seni* ko'raman.\n\nHozir, aynan shu daqiqada — ichingda nima bor? Bitta so'z ham bo'lsa ayt.`],
+    [
+      `Shunday...\n\nBu his qachon eng kuchli bo'ladi? Qaysi vaziyatda, qaysi odam yonida?`,
+      `O'sha his seni qaysi tomoningni yashiradi? Odamlar seni qanday ko'rishini xohlaysan — lekin aslida qaysi qisming ko'rinmaslikka harakat qiladi?`,
+    ],
+    [
+      `Men bir narsa sezmoqdaman...\n\nSen juda ko'p narsa ko'tarasiz — va buni ko'rsatmaslikka urinyapsiz. *Nega ko'rsatish xavfli?*`,
+      `Kimdir seni ko'rsa — asl holatingda, zaif paytingda — nima bo'ladi deb o'ylaysan?`,
+      `Bolaliging haqida bir narsa. Uyda his-tuyg'ularingni ochiq ifodalash xavfsiz edimi?`,
+      `Seni eng yaxshi tushunishi kerak bo'lgan kishi... tushunmadi. Bu kim edi va nima bo'ldi?`,
+    ],
+    [`Ko'zgu seni ko'rmoqda...\n\nSen kuchli ko'rinasan. Lekin bu kuch ba'zan himoya — ichki noziklikni yashirish uchun qurilgan devor.\n\n*Eng qattiqqo'l bo'lgan paytingda* — aslida nima yig'layapti ichingda?`],
+  ],
+  ru:[
+    [`Привет, ${userName}. Я — Зеркало.\n\nТы смотришь на меня, но я вижу *тебя*.\n\nПрямо сейчас — что внутри? Даже одно слово.`],
+    [
+      `Понятно...\n\nКогда это чувство становится сильнее всего? В какой ситуации, рядом с кем?`,
+      `Что это чувство скрывает? Кем ты хочешь казаться — и что прячется за этим образом?`,
+    ],
+    [
+      `Я кое-что замечаю...\n\nТы несёшь очень много — и стараешься не показывать. *Почему показывать опасно?*`,
+      `Если кто-то увидит тебя настоящего — уязвимого — что произойдёт?`,
+      `Спрошу о детстве. Дома было безопасно выражать чувства?`,
+      `Тот, кто должен был понять тебя лучше всех... не понял. Кто это и что случилось?`,
+    ],
+    [`Зеркало видит тебя...\n\nТы выглядишь сильным. Но эта сила иногда — броня, чтобы скрыть внутреннюю нежность.\n\n*В самые жёсткие моменты* — о чём на самом деле плачет что-то внутри?`],
+  ]
+};
+
+const EKW = {
+  uz:{anger:['g\'azab','achchiq','alam','qahr'],sadness:['qayg\'u','yig\'','dard','azob','tushkun','yolg\'iz'],fear:['qo\'rq','xavotir','bezovta','tashvish'],shame:['uyat','sharm','xijolat'],pride:['faxr','kibr','g\'ururlan','zo\'r'],loneliness:['yolg\'iz','tushunilmagan','ko\'rilmagan','tanho'],guilt:['aybdor','gunoh','kechir']},
+  ru:{anger:['злость','гнев','злой','раздраж','бесит'],sadness:['грусть','грустно','тоска','плачу','одинок','депресс'],fear:['страх','боюсь','тревог','волнуюсь'],shame:['стыд','стыдно','позор'],pride:['гордость','горжусь','превосход'],loneliness:['одинок','непонят','невидим'],guilt:['вина','виноват','прости']}
+};
+
+function detectEmotions(text){
+  const kw=EKW[state.lang]||EKW.uz; const lower=text.toLowerCase();
+  Object.entries(kw).forEach(([e,words])=>{
+    if(words.some(w=>lower.includes(w))){
+      state.emotionalThemes[e]=(state.emotionalThemes[e]||0)+1;
+      if(['anger','shame','sadness','loneliness'].includes(e))state.scores.W++;
+      if(e==='pride')state.scores.G++;
+      if(['fear','guilt'].includes(e))state.scores.V++;
+    }
+  });
+}
+
+function getDemoResponse(userText){
+  const flow=DEMO_FLOW[state.lang]||DEMO_FLOW.uz;
+  const mc=state.messageCount;
+  detectEmotions(userText);
+  if(mc===0){state.stage=1;return flow[0][0];}
+  if(mc<=2){state.stage=1;return flow[1][Math.min(mc-1,flow[1].length-1)];}
+  if(mc<=6){state.stage=2;return flow[2][Math.min(mc-3,flow[2].length-1)];}
+  if(mc===7){state.stage=3;return flow[3][0];}
+  state.stage=4;return null;
+}
+
+const TASKS_DB = {
+  uz:{
+    anger:[
+      {type:'daily',icon:'🌬️',title:'Nafas ritmi',desc:'G\'azab paydo bo\'lganda — to\'xtang. 4 soniya nafas oling, 4 tutib turing, 4 chiqaring. Har kuni.'},
+      {type:'action',icon:'✍️',title:'Yozilmagan xat',desc:'Sizni g\'azablantirayotgan odamga xat yozing — yubormaysiz. Faqat hissiyotingizni to\'kib tashlang.'},
+      {type:'reflect',icon:'🌙',title:'Kecha kuzatish',desc:'Yotishdan oldin: "Bugun g\'azablanganmda aslida nima xohlardim?" — deb so\'rang.'},
+    ],
+    sadness:[
+      {type:'daily',icon:'🤲',title:'Tanani sezish',desc:'5 daqiqa — qo\'llaringizni yurak ustiga qo\'ying. Siz hozir yaxshi ekanligingizni his qiling.'},
+      {type:'action',icon:'📞',title:'Aloqa o\'rnatish',desc:'Bugun bitta odamga qo\'ng\'iroq qiling — SMS emas. Shunchaki hal-ahvol so\'rang.'},
+      {type:'reflect',icon:'🌙',title:'Qayg\'u sahifasi',desc:'3 ta sabab yozing nima uchun qayg\'uryapsiz. Keyin yoniga: "Bu hisda aslida nima kerak?"'},
+    ],
+    fear:[
+      {type:'daily',icon:'🦁',title:'Jasorat daftari',desc:'Bugun bitta kichik narsa qiling — qo\'rqsangiz ham. Kechasi: "Bugun men ___ni qildim."'},
+      {type:'action',icon:'🪞',title:'Ko\'zguga qarang',desc:'Ertalab ko\'zguga 30 soniya qarang. O\'zingizga ism bilan: "[Ism], men seni ko\'ryapman."'},
+      {type:'reflect',icon:'🌙',title:'Qo\'rquv nima deydi',desc:'Yozing: "Men ___dan qo\'rqaman, chunki ___. Agar bu ro\'y bermasa, men ___."'},
+    ],
+    loneliness:[
+      {type:'daily',icon:'💜',title:'O\'z-o\'zini qabul qilish',desc:'Har kuni 3 ta narsa yozing: "Bugun men o\'zimga nima qildim?" — ovqat, dam, o\'z-o\'zini tinglash.'},
+      {type:'action',icon:'🌱',title:'Bitta aloqa',desc:'Bugun bitta odamga yozing: "Siz bilan vaqt o\'tkazishni xohlardim." — shunchaki.'},
+      {type:'reflect',icon:'🌙',title:'Yolg\'izlik xarita',desc:'Yozing: "Yolg\'iz his qilamanmi — yoki tushunilmaymanmi?" Bu ikki narsa farq qiladi.'},
+    ],
+    shame:[
+      {type:'daily',icon:'🌸',title:'Uyatsiz daqiqa',desc:'Har kuni 3 daqiqa: o\'zingizga "men yetarliman" deb ayting. Ishonmasangiz ham aytavering.'},
+      {type:'action',icon:'💬',title:'Haqiqatni aytish',desc:'Bugun bitta odamga haqiqiy his-tuyg\'uyingizni ayting — hatto kichik narsa bo\'lsa ham.'},
+      {type:'reflect',icon:'🌙',title:'Uyat izi',desc:'Yozing: "Bu uyat qaerdan keldi? Kim o\'rgatdi? Hali ham to\'g\'rimi?"'},
+    ],
+    pride:[
+      {type:'daily',icon:'🙏',title:'Minnatdorlik amaliyoti',desc:'Har kuni 3 ta narsa yozing: "Bugun ___ga minnatdorman" — kichik narsalar ham bo\'ladi.'},
+      {type:'action',icon:'👂',title:'Tinglovchi bo\'l',desc:'Bugun bitta suhbatda o\'zingiz haqingizda gapirmang. Faqat savol bering va tinglang.'},
+      {type:'reflect',icon:'🌙',title:'Ko\'zgu momenti',desc:'Yozing: "Men odamlarga nima beraman — va ulardan nima kutaman? Bu tengmi?"'},
+    ],
+  },
+  ru:{
+    anger:[
+      {type:'daily',icon:'🌬️',title:'Ритм дыхания',desc:'Когда злость — остановитесь. 4 сек вдох, 4 задержка, 4 выдох. Каждый день.'},
+      {type:'action',icon:'✍️',title:'Неотправленное письмо',desc:'Напишите письмо тому, кто вас злит. Отправлять не нужно — просто выплесните всё.'},
+      {type:'reflect',icon:'🌙',title:'Вечернее наблюдение',desc:'Перед сном: "Когда я злился сегодня — чего я на самом деле хотел?"'},
+    ],
+    loneliness:[
+      {type:'daily',icon:'💜',title:'Принятие себя',desc:'Каждый день 3 вещи: "Что я сделал для себя сегодня?" — поел, отдохнул, прислушался?'},
+      {type:'action',icon:'🌱',title:'Одно соединение',desc:'Напишите одному человеку: "Хотел(а) бы провести время вместе." — просто так.'},
+      {type:'reflect',icon:'🌙',title:'Карта одиночества',desc:'"Я одинок(а) — или меня не понимают?" Это разные вещи. Разберитесь письменно.'},
+    ],
+    sadness:[
+      {type:'daily',icon:'🤲',title:'Телесное присутствие',desc:'5 минут — руки на сердце. Почувствуйте, что вы живёте и вы в порядке.'},
+      {type:'action',icon:'📞',title:'Живой контакт',desc:'Позвоните кому-то сегодня — не пишите, а позвоните. Просто спросите как дела.'},
+      {type:'reflect',icon:'🌙',title:'Страница грусти',desc:'Запишите 3 причины грусти. Рядом: "Что мне на самом деле нужно в этой боли?"'},
+    ],
+    fear:[
+      {type:'daily',icon:'🦁',title:'Дневник смелости',desc:'Сделайте сегодня одно маленькое пугающее дело. Вечером запишите: "Я сделал(а) ___."'},
+      {type:'action',icon:'🪞',title:'Взгляд в зеркало',desc:'Утром 30 секунд в зеркало. По имени: "[Имя], я тебя вижу."'},
+      {type:'reflect',icon:'🌙',title:'Что говорит страх',desc:'"Я боюсь ___, потому что ___. Если этого не случится — я ___."'},
+    ],
+  }
+};
+
+const INSIGHTS = {
+  uz:{anger:'Sening g\'azabing — yig\'ilgan ranjishning ovozi. U zaifligi yo\'q, u himoyalanmoqda.',sadness:'Qayg\'u zaiflik emas. U sening chuqur his qila olishingning belgisi.',fear:'Qo\'rquv seni to\'xtatmaydi — u faqat seni uchun muhim narsani ko\'rsatadi.',loneliness:'Seni ko\'rmaganlar uchun emas — o\'zing o\'zingni ko\'rishni boshlash vaqti.',shame:'Uyat seni kim ekanligingni belgilamaydi. U shunchaki eski, qabul qilingan bir xabar.',pride:'Kuch va kibr orasidagi chegara — o\'zingning zaif tomonlarini ham tan olishda.'},
+  ru:{anger:'Твой гнев — голос давно накопившейся обиды. Он не слаб, он защищается.',sadness:'Грусть — не слабость. Это признак твоей способности глубоко чувствовать.',fear:'Страх не останавливает тебя — он лишь показывает, что тебе важно.',loneliness:'Не для тех, кто тебя не видел — пришло время начать видеть себя самому.',shame:'Стыд не определяет тебя. Это просто старое послание, которое ты принял.',pride:'Граница между силой и гордыней — в принятии собственной уязвимости.'}
+};
+
+function generateTasks(){
+  const th=state.emotionalThemes;
+  const dominant=Object.entries(th).sort((a,b)=>b[1]-a[1])[0]?.[0]||'loneliness';
+  const db=TASKS_DB[state.lang]||TASKS_DB.uz;
+  const set=db[dominant]||db.loneliness||TASKS_DB.uz.loneliness;
+  return set.map((t,i)=>({...t,id:`t_${Date.now()}_${i}`,done:false}));
+}
+
+function getInsight(){
+  const th=state.emotionalThemes;
+  const d=Object.entries(th).sort((a,b)=>b[1]-a[1])[0]?.[0]||'loneliness';
+  const ins=INSIGHTS[state.lang]||INSIGHTS.uz;
+  return ins[d]||ins.loneliness;
+}
+
+function setLang(l,btn){
+  state.lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function startJourney(){
+  showScreen('chat',true);
+  document.getElementById('nav').classList.add('visible');
+  setTimeout(()=>{
+    appendMessage('ai',DEMO_FLOW[state.lang][0][0]);
+    state.messageCount=0;
+  },500);
+}
+
+function appendMessage(role,text,special=false){
+  const msgs=document.getElementById('messages');
+  const div=document.createElement('div');
+  div.className=`msg ${role}`;
+  const bubble=document.createElement('div');
+  bubble.className='bubble'+(special?' mirror-moment':'');
+  bubble.innerHTML=text.replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+  const time=document.createElement('div');
+  time.className='msg-time';
+  time.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  div.appendChild(bubble);div.appendChild(time);
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function showTyping(){
+  const msgs=document.getElementById('messages');
+  const div=document.createElement('div');
+  div.className='msg ai';div.id='typing-indicator';
+  div.innerHTML='<div class="bubble typing-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){document.getElementById('typing-indicator')?.remove();}
+
+function updateStageUI(){
+  const names={uz:['Tanishuv','Chuqurlashish','Ko\'zgu','Vazifalar'],ru:['Знакомство','Погружение','Зеркало','Задания']};
+  const n=(names[state.lang]||names.uz)[state.stage-1];
+  const el=document.getElementById('stage-indicator');
+  if(el)el.innerHTML=`Bosqich ${state.stage}/4<br><span style="color:var(--accent2)">${n}</span>`;
+}
+
+async function sendMessage(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text||state.aiWaiting)return;
+  input.value='';input.style.height='auto';
+  appendMessage('user',text);
+  state.messageCount++;
+  state.aiWaiting=true;
+  document.getElementById('send-btn').disabled=true;
+  detectEmotions(text);
+  await new Promise(r=>setTimeout(r,400));
+  showTyping();
+  try{
+    if(openaiKey){
+      // === REAL AI MODE ===
+      const rawText=await callOpenAI(text);
+      hideTyping();
+      const {text:aiText,hasTasks}=parseAIResponse(rawText);
+      if(hasTasks){
+        if(aiText)appendMessage('ai',aiText,true);
+        state.tasks=generateTasks();
+        saveStats({sessions:1});saveState();updateProfileUI();
+        setTimeout(showTasksScreen,2000);
+      } else {
+        const isMirror=state.messageCount>=7;
+        appendMessage('ai',aiText,isMirror);
+        if(state.messageCount<=2)state.stage=1;
+        else if(state.messageCount<=5)state.stage=2;
+        else state.stage=3;
+        updateStageUI();
+      }
+    } else {
+      // === DEMO MODE ===
+      await new Promise(r=>setTimeout(r,1200+Math.random()*800));
+      const aiText=getDemoResponse(text);
+      hideTyping();
+      if(aiText===null){
+        const mirrorText=state.lang==='uz'
+          ?`Sen bilan bu suhbat — noyob edi.\n\nSeni ko'rdim.\n\nEndi sanga vazifalar beraman — o'zing bilan yuzlashishni davom ettir.`
+          :`Этот разговор — был особенным.\n\nЯ тебя увидел(а).\n\nТеперь — твои задания. Продолжай встречать себя.`;
+        appendMessage('ai',mirrorText,true);
+        state.insight=getInsight();
+        state.tasks=generateTasks();
+        saveStats({sessions:1});saveState();updateProfileUI();
+        setTimeout(showTasksScreen,2000);
+      } else {
+        appendMessage('ai',aiText,state.stage===3);
+        updateStageUI();
+      }
+    }
+  }catch(e){
+    hideTyping();
+    const msg=e.message?.includes('401')||e.message?.includes('Incorrect API key')
+      ?(state.lang==='uz'?'❌ API key noto\'g\'ri. ⚙️ tugmasini bosib yangi key kiriting.':'❌ Неверный API ключ. Нажмите ⚙️ и введите снова.')
+      :(state.lang==='uz'?'Xatolik: '+e.message:'Ошибка: '+e.message);
+    appendMessage('ai',msg);
+  }
+  state.aiWaiting=false;
+  document.getElementById('send-btn').disabled=false;
+}
+
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+function showTasksScreen(){
+  renderTasksScreen();showScreen('tasks');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-tasks').classList.add('active');
+}
+
+function renderTasksScreen(){
+  const body=document.getElementById('tasks-body');
+  const dateEl=document.getElementById('tasks-date');
+  dateEl.textContent=new Date().toLocaleDateString(state.lang==='uz'?'uz':'ru',{weekday:'long',day:'numeric',month:'long'});
+  const tasks=state.tasks;
+  if(!tasks||!tasks.length){
+    body.innerHTML=`<p style="color:var(--text-dim);text-align:center;padding:40px">${state.lang==='uz'?'Avval suhbatni yakunlang':'Сначала завершите разговор'}</p>`;
+    return;
+  }
+  const done=tasks.filter(t=>t.done).length;
+  const pct=Math.round((done/tasks.length)*100);
+  body.innerHTML='';
+  const prog=document.createElement('div');prog.className='progress-section';
+  prog.innerHTML=`<div class="progress-label"><span>${state.lang==='uz'?'Bajarilgan':'Выполнено'}</span><span>${done}/${tasks.length}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+  body.appendChild(prog);
+  if(state.insight){
+    const ins=document.createElement('div');ins.className='insight-card';
+    ins.innerHTML=`<div class="insight-label">🪞 ${state.lang==='uz'?"Ko'zgu ko'rsatmoqda":"Зеркало показывает"}</div><div class="insight-text">${state.insight}</div>`;
+    body.appendChild(ins);
+  }
+  tasks.forEach((task,idx)=>{
+    const card=document.createElement('div');card.className='task-card'+(task.done?' done':'');
+    const tl={daily:state.lang==='uz'?'Kunlik amaliyot':'Ежедневная практика',action:state.lang==='uz'?'Harakat vazifasi':'Задание действия',reflect:state.lang==='uz'?'Fikrlash':'Рефлексия'}[task.type]||task.type;
+    const dl=task.done?(state.lang==='uz'?'✅ Bajarildi!':'✅ Выполнено!'):(state.lang==='uz'?'Bajardim ✓':'Сделано ✓');
+    card.innerHTML=`<div class="task-type"><div class="task-icon ${task.type}">${task.icon}</div><div class="task-type-label">${tl}</div></div><div class="task-title">${task.title}</div><div class="task-desc">${task.desc}</div><button class="task-done-btn" onclick="markTaskDone(${idx})" ${task.done?'disabled':''}>${dl}</button>`;
+    body.appendChild(card);
+  });
+  const btn=document.createElement('button');btn.className='btn-secondary';
+  btn.textContent=state.lang==='uz'?'+ Yangi suhbat boshlash':'+ Начать новый разговор';
+  btn.onclick=newJourney;body.appendChild(btn);
+}
+
+function markTaskDone(idx){
+  state.tasks[idx].done=true;saveStats({completedTasks:1});saveState();updateProfileUI();renderTasksScreen();
+  tg?.HapticFeedback?.impactOccurred('medium');
+}
+
+function newJourney(){
+  Object.assign(state,{messageCount:0,emotionalThemes:{},stage:1,tasks:[],insight:'',aiWaiting:false});
+  document.getElementById('messages').innerHTML='';
+  showScreen('chat');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-chat').classList.add('active');
+  setTimeout(()=>{appendMessage('ai',DEMO_FLOW[state.lang][0][0]);},400);
+}
+
+function getStats(){try{return JSON.parse(localStorage.getItem('kozgu_stats')||'{}')}catch(e){return{}}}
+function saveStats(delta){const s=getStats();Object.keys(delta).forEach(k=>{s[k]=(s[k]||0)+delta[k];});s.lastDate=new Date().toDateString();localStorage.setItem('kozgu_stats',JSON.stringify(s));}
+function saveState(){localStorage.setItem('kozgu_state',JSON.stringify({scores:state.scores,tasks:state.tasks}));}
+
+function updateProfileUI(){
+  const stats=getStats();
+  document.getElementById('stat-sessions').textContent=stats.sessions||0;
+  document.getElementById('stat-tasks').textContent=stats.completedTasks||0;
+  document.getElementById('stat-days').textContent=stats.sessions||0;
+  document.getElementById('stat-streak').textContent='🔥 '+(stats.sessions||0);
+  const sc=state.scores;const total=Object.values(sc).reduce((a,b)=>a+b,0)||1;
+  const pcts={V:Math.round(sc.V/total*100),G:Math.round(sc.G/total*100),H:Math.round(sc.H/total*100),W:Math.round(sc.W/total*100)};
+  setTimeout(()=>{
+    ['V','G','H','W'].forEach(k=>{
+      document.getElementById(k.toLowerCase()+'-bar').style.width=pcts[k]+'%';
+      document.getElementById(k.toLowerCase()+'-pct').textContent=pcts[k]+'%';
+    });
+  },100);
+  const dominant=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0]?.[0]||'H';
+  const TYPES={uz:{V:['🔵',"Olqish izlovchi"],G:['🔴',"Yashirin mag'rur"],H:['🟢','Ichki hur'],W:['🟡',"Jarohatli jangchi"]},ru:{V:['🔵','Ищущий признания'],G:['🔴','Скрытый гордец'],H:['🟢','Внутренне свободный'],W:['🟡','Раненый воин']}};
+  const [emoji,label]=(TYPES[state.lang]||TYPES.uz)[dominant];
+  document.getElementById('profile-emoji').textContent=emoji;
+  document.getElementById('profile-name').textContent=tgUser?.first_name||userName;
+  document.getElementById('profile-type').textContent=label;
+}
+
+function showScreen(id,skipNav){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  if(!skipNav){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+id)?.classList.add('active');}
+  if(id==='profile')updateProfileUI();
+  if(id==='tasks')renderTasksScreen();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{updateProfileUI();updateAIBadge();});
+</script>
+</body>
+</html>
