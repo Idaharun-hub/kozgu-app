@@ -8,10 +8,10 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:#0a0a12; --surface:#12121e; --surface2:#1a1a2e; --border:#2a2a45;
-  --accent:#8b5cf6; --accent2:#c4b5fd; --accent-glow:rgba(139,92,246,0.25);
-  --silver:#a8a8c0; --text:#e8e8f0; --text-dim:#6b6b8a;
-  --user-bg:#1e1b4b; --ai-bg:#16162a; --danger:#f87171; --success:#34d399;
+  --bg:#ffffff; --surface:#f0fbfa; --surface2:#e0f7f6; --border:#b2e8e5;
+  --accent:#0abab5; --accent2:#007b77; --accent-glow:rgba(10,186,181,0.18);
+  --silver:#5d8a88; --text:#1a3332; --text-dim:#7aadab;
+  --user-bg:#e0f7f6; --ai-bg:#ffffff; --danger:#e05c5c; --success:#0abab5;
 }
 html,body { height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
 #app { height:100vh; display:flex; flex-direction:column; position:relative; overflow:hidden; }
@@ -19,27 +19,27 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .screen.active { opacity:1; pointer-events:all; transform:translateY(0); }
 
 /* WELCOME */
-#welcome { align-items:center; justify-content:center; padding:32px 24px; text-align:center; background:radial-gradient(ellipse at 50% 30%,rgba(139,92,246,0.12) 0%,transparent 70%); }
+#welcome { align-items:center; justify-content:center; padding:32px 24px; text-align:center; background:radial-gradient(ellipse at 50% 30%,rgba(10,186,181,0.10) 0%,transparent 70%); }
 .mirror-wrap { position:relative; width:140px; height:180px; margin:0 auto 32px; }
-.mirror-frame { width:100%; height:100%; border-radius:50% 50% 46% 46%/60% 60% 40% 40%; border:2px solid var(--border); background:linear-gradient(160deg,#1a1a2e 0%,#0a0a18 100%); position:relative; overflow:hidden; box-shadow:0 0 40px rgba(139,92,246,0.15),inset 0 1px 0 rgba(255,255,255,0.05); }
-.mirror-shimmer { position:absolute; top:15%; left:15%; width:30%; height:40%; background:linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 100%); border-radius:50%; }
-.mirror-text-inside { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:48px; filter:drop-shadow(0 0 12px rgba(139,92,246,0.6)); animation:pulse-glow 3s ease-in-out infinite; }
-@keyframes pulse-glow { 0%,100%{filter:drop-shadow(0 0 10px rgba(139,92,246,0.5))} 50%{filter:drop-shadow(0 0 22px rgba(139,92,246,0.9))} }
+.mirror-frame { width:100%; height:100%; border-radius:50% 50% 46% 46%/60% 60% 40% 40%; border:2px solid var(--border); background:linear-gradient(160deg,#e0f7f6 0%,#b2e8e5 100%); position:relative; overflow:hidden; box-shadow:0 0 40px rgba(10,186,181,0.18),inset 0 1px 0 rgba(255,255,255,0.6); }
+.mirror-shimmer { position:absolute; top:15%; left:15%; width:30%; height:40%; background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,transparent 100%); border-radius:50%; }
+.mirror-text-inside { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:48px; filter:drop-shadow(0 0 12px rgba(10,186,181,0.5)); animation:pulse-glow 3s ease-in-out infinite; }
+@keyframes pulse-glow { 0%,100%{filter:drop-shadow(0 0 10px rgba(10,186,181,0.4))} 50%{filter:drop-shadow(0 0 22px rgba(10,186,181,0.8))} }
 .mirror-stand { position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); width:40px; height:14px; background:var(--border); border-radius:0 0 8px 8px; }
 .welcome-title { font-size:28px; font-weight:700; letter-spacing:4px; color:var(--accent2); text-transform:uppercase; margin-bottom:8px; }
 .welcome-sub { font-size:13px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:32px; }
 .welcome-desc { font-size:15px; color:var(--silver); line-height:1.7; max-width:300px; margin:0 auto 32px; }
 .welcome-desc em { color:var(--accent2); font-style:normal; }
-.btn-primary { background:linear-gradient(135deg,var(--accent) 0%,#7c3aed 100%); color:#fff; border:none; border-radius:16px; padding:16px 40px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 4px 24px rgba(139,92,246,0.4); transition:transform 0.15s,box-shadow 0.15s; width:100%; max-width:280px; font-family:inherit; }
+.btn-primary { background:linear-gradient(135deg,var(--accent) 0%,#007b77 100%); color:#fff; border:none; border-radius:16px; padding:16px 40px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 4px 24px rgba(10,186,181,0.35); transition:transform 0.15s,box-shadow 0.15s; width:100%; max-width:280px; font-family:inherit; }
 .btn-primary:active { transform:scale(0.97); }
 .lang-toggle { display:flex; gap:8px; margin-bottom:16px; }
 .lang-btn { flex:1; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text-dim); font-size:13px; cursor:pointer; transition:all 0.2s; max-width:130px; font-family:inherit; }
-.lang-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(139,92,246,0.1); }
+.lang-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(10,186,181,0.1); }
 
 /* CHAT */
 #chat { background:var(--bg); }
 .chat-header { display:flex; align-items:center; gap:12px; padding:14px 16px 12px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
-.chat-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#7c3aed); display:flex; align-items:center; justify-content:center; font-size:18px; }
+.chat-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#007b77); display:flex; align-items:center; justify-content:center; font-size:18px; }
 .chat-header-info h2 { font-size:16px; font-weight:600; }
 .chat-status { font-size:11px; color:var(--success); display:flex; align-items:center; gap:4px; }
 .status-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:blink 2s infinite; }
@@ -53,7 +53,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .msg.user { align-self:flex-end; align-items:flex-end; }
 .msg.ai { align-self:flex-start; align-items:flex-start; }
 .bubble { padding:12px 16px; border-radius:18px; font-size:15px; line-height:1.6; word-wrap:break-word; }
-.msg.user .bubble { background:var(--user-bg); border-bottom-right-radius:4px; color:#c4b5fd; }
+.msg.user .bubble { background:var(--user-bg); border-bottom-right-radius:4px; color:var(--accent2); }
 .msg.ai .bubble { background:var(--ai-bg); border:1px solid var(--border); border-bottom-left-radius:4px; }
 .msg.ai .bubble em { color:var(--accent2); font-style:normal; font-weight:500; }
 .msg-time { font-size:10px; color:var(--text-dim); padding:0 4px; }
@@ -61,7 +61,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .typing-dot { width:7px; height:7px; background:var(--text-dim); border-radius:50%; animation:typing 1.2s infinite; }
 .typing-dot:nth-child(2){animation-delay:0.2s} .typing-dot:nth-child(3){animation-delay:0.4s}
 @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
-.mirror-moment { background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(124,58,237,0.08)) !important; border-color:rgba(139,92,246,0.4) !important; position:relative; overflow:hidden; }
+.mirror-moment { background:linear-gradient(135deg,rgba(10,186,181,0.12),rgba(0,123,119,0.06)) !important; border-color:rgba(10,186,181,0.4) !important; position:relative; overflow:hidden; }
 .mirror-moment::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); }
 .chat-input-wrap { padding:12px 16px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; flex-shrink:0; }
 .chat-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:12px 16px; color:var(--text); font-size:15px; resize:none; outline:none; line-height:1.4; max-height:120px; overflow-y:auto; font-family:inherit; transition:border-color 0.2s; }
@@ -77,7 +77,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .tasks-header h2 { font-size:20px; font-weight:700; color:var(--accent2); margin-bottom:4px; }
 .tasks-header p { font-size:13px; color:var(--text-dim); }
 .tasks-body { padding:20px 16px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1; }
-.insight-card { background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(124,58,237,0.06)); border:1px solid rgba(139,92,246,0.3); border-radius:16px; padding:16px; position:relative; overflow:hidden; }
+.insight-card { background:linear-gradient(135deg,rgba(10,186,181,0.10),rgba(0,123,119,0.04)); border:1px solid rgba(10,186,181,0.3); border-radius:16px; padding:16px; position:relative; overflow:hidden; }
 .insight-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); }
 .insight-label { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--accent); margin-bottom:8px; }
 .insight-text { font-size:15px; line-height:1.6; }
@@ -85,7 +85,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .task-card.done { border-color:var(--success); opacity:0.7; }
 .task-type { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
 .task-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
-.task-icon.daily{background:rgba(139,92,246,0.15)} .task-icon.action{background:rgba(251,146,60,0.15)} .task-icon.reflect{background:rgba(52,211,153,0.15)}
+.task-icon.daily{background:rgba(10,186,181,0.15)} .task-icon.action{background:rgba(251,146,60,0.15)} .task-icon.reflect{background:rgba(0,123,119,0.15)}
 .task-type-label { font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); }
 .task-title { font-size:15px; font-weight:600; margin-bottom:6px; }
 .task-desc { font-size:13px; color:var(--silver); line-height:1.6; margin-bottom:12px; }
@@ -108,7 +108,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 
 /* PROFILE */
 #profile { overflow-y:auto; padding-bottom:80px; }
-.profile-header { padding:32px 20px 20px; text-align:center; background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.1) 0%,transparent 70%); border-bottom:1px solid var(--border); }
+.profile-header { padding:32px 20px 20px; text-align:center; background:radial-gradient(ellipse at 50% 0%,rgba(10,186,181,0.1) 0%,transparent 70%); border-bottom:1px solid var(--border); }
 .profile-emoji { font-size:52px; margin-bottom:12px; }
 .profile-name { font-size:20px; font-weight:700; margin-bottom:4px; }
 .profile-type { font-size:13px; color:var(--accent2); letter-spacing:1px; text-transform:uppercase; }
@@ -370,7 +370,7 @@ function parseAIResponse(rawText){
 }
 
 const tg = window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();tg.setHeaderColor?.('#0a0a12');tg.setBackgroundColor?.('#0a0a12');}
+if(tg){tg.ready();tg.expand();tg.setHeaderColor?.('#f0fbfa');tg.setBackgroundColor?.('#ffffff');}
 const tgUser = tg?.initDataUnsafe?.user;
 const userId = tgUser?.id || 'demo_' + Math.random().toString(36).slice(2,8);
 const userName = tgUser?.first_name || "Do'st";
@@ -429,15 +429,250 @@ function detectEmotions(text){
   });
 }
 
+const SMART_RESPONSES={
+  uz:{
+    anger:[
+      "G'azab... u qayerdan kelmoqda? Biror narsa yoki biror kishi?",
+      "Bu g'azabning ostida nima bor? Ko'pincha undan chuqurroq bir his yashirinadi.",
+      "G'azab seni himoya qiladi — lekin nidan? Qaysi zaiflikni berkitmoqda?",
+      "Bu g'azab kimga qaratilgan — odamgami, vaziyatgami... yoki o'zingga?",
+      "G'azab paytingda — aslida nima xohlaysan? Shu paytda eng kerakli narsa nima?",
+      "Bu his eng kuchli bo'lganda — atrofingdagilar seni ko'radi deb o'ylaysanmi?",
+    ],
+    sadness:[
+      "Bu qayg'u qachon eng og'ir bo'ladi? Qaysi payt, qaysi joyda?",
+      "Bu qayg'uni kim bilan bo'lishgandingsan? Yoki yolg'iz ko'tarib yurdingmi?",
+      "Bu qayg'u nima haqida? U senga nimani yo'qotganingni aytmoqchimi?",
+      "Ichingdagi bu og'irlikni — birov ko'rganmi hech? Yoki yashirdingmi?",
+      "Bu qayg'u — faqat shu vaziyat uchunmi, yoki uzoqdan kelayotgan bir narsamidi?",
+      "Yig'laganingda — nima engillashadi? Yoki hech narsa o'zgarmaydimi?",
+    ],
+    fear:[
+      "Bu qo'rquv qachon paydo bo'ldi? Birinchi marta qachon shu hisni sezdingsan?",
+      "Qo'rquvingning narigi tomonida nima bor? U seni nimadan saqlaydi?",
+      "Bu qo'rquv sening qanday qarorlaringni o'zgartirdi hayotda?",
+      "Agar bu qo'rquv yo'q bo'lganda — siz kim bo'lardingiz?",
+      "Bu qo'rquvni birov bilishi kerakmi, yoki yolg'iz ko'tarib yuribsanmi?",
+      "Qo'rquv va ehtiyotkorlik — farqi nima, sening uchun?",
+    ],
+    loneliness:[
+      "Bu yolg'izlik... odamlar yo'qligidanmi, yoki tushunilmayotganingdanmi?",
+      "Seni eng yaxshi tushunishi kerak bo'lgan kishi — kim edi?",
+      "Bu yolg'izlikni birinchi marta qachon his qildingsan? Qaysi yoshda?",
+      "Hozir kimdir sening asl holatingni ko'rsa — zaif, charchagan holatingni — nima his qilardingsan?",
+      "Yolg'izlik va tushunilmaslik — bu ikki narsa farq qiladi. Senda qaysi biri ko'proq?",
+      "O'zingni tushungan biror on bormi — kim bilan, qayerda?",
+    ],
+    shame:[
+      "Bu uyat qayerdan keladi? Biror voqea, biror odam...?",
+      "Uyat seni qaysi tomonini yashiradi? Nima ko'rinmaslikka harakat qiladi?",
+      "Bu uyatni kim o'rgatti? Yoki u o'zi o'sib chiqdimi?",
+      "Uyat seni kimdan yashiradi — odamlardan yoki o'zingdanmi?",
+      "Bu uyat bo'lmasa — qanday odam bo'lardingsan?",
+    ],
+    guilt:[
+      "Bu aybdorlik hissi... u qachon paydo bo'ldi?",
+      "O'sha paytda sen qila oladiganing qilgandingsan. Buni ko'ra olasanmi?",
+      "Bu aybni ko'tarib yurishing sanga nima berayotir? Va nima olayotir?",
+      "Kechirish — o'zingni oqlash emas. U shunchaki yuk tushirish. Tayyor emassan hali?",
+    ],
+    generic:[
+      "Bu haqida ko'proq gapir. Ichingda nima bo'layotganini ko'rishni xohlayman.",
+      "Bu his sening qaysi qismingni ko'rsatadi? Odamlar ko'rmaydigan tomonini?",
+      "Shu paytda ichingda yana nima bor? Bu hisning yonida?",
+      "Bu sezgi sanga nimani aytmoqchi? Tinglasang...",
+      "Sen qachon o'zingni eng o'zingday his qilasan?",
+      "Bu vaziyatda — o'zingga nima degan bo'larding?",
+      "Bu his tanish — oldindan ham kelganmi?",
+      "O'sha his ichingda qayerda — yurakdami, tomog'ingdami, qornindami?",
+      "Hozir gapirayotganing — bu sening o'zing uchunmi yoki kimgadir hisobotmi?",
+      "Bu his bo'lganda — nimani qilishni istaysan? Qochishni, yoki yaqinlashishni?",
+    ],
+    deepening:[
+      "Bolaliging haqida bir narsa. Uyda his-tuyg'ularingni ochiq ifodalash xavfsiz edimi?",
+      "Seni eng yaxshi tushunishi kerak bo'lgan kishi... tushunmadi. Bu kim edi?",
+      "Qachon birinchi marta o'zingni yashirish kerak deb o'ylading?",
+      "O'sha kichik bola — hozir unga nima degan bo'larding?",
+      "Kuchli ko'rinish sanga qachondan boshlab muhim bo'lib qoldi?",
+      "Bolaliging haqida... sevgi qanday ko'rinardi u uyda? Gap, teginishmi, yoki ish bilan?",
+    ],
+    mirror:[
+      "Ko'zgu seni ko'rmoqda...\n\nSen kuchli ko'rinasan. Lekin bu kuch ba'zan himoya — ichki noziklikni yashirish uchun qurilgan devor.\n\n*Eng qattiqqo'l bo'lgan paytingda* — aslida nima yig'layapti ichingda?",
+      "Ko'zguning ko'rsatishi...\n\nSen juda ko'p narsa ko'tarasiz — va buni ko'rsatmaslikka urinyapsiz.\n\n*Nima uchun ko'rsatish xavfli?*",
+      "Men bir narsa ko'rmoqdaman...\n\nSen o'zingni juda qattiqqo'l tutasiz. Ammo zaiflik — insoniylikning eng chuqur ifodasi.\n\n*Qachon oxirgi bor zaifligingni qabul qilgandingsan?*",
+    ],
+    // Yashirin qatlam: nafs muhasabasi va muraqabah (Abdulqadir Isa r.h. ta'limotidan ilhomlangan)
+    nafs:[
+      "Hozir ichingdagi ovoz sanga nima buyurmoqda? Va sen unga itoat qilyapsanmi yoki qarshilik ko'rsatyapsanmi?",
+      "Bu xohish — qalbingdanmi yoki nafsingdanmi? Ikkovini farqlash mumkin — biri tinchlik beradi, ikkinchisi bezovtalik.",
+      "O'zingni qoralayapsanmi hozir? Bu qoralash — uyg'onayotganning belgisi. Uni kuch manbaiga aylantirish mumkin.",
+      "Hozirgi holatингni bir kuz: nafs ammaramи (yomonlikka undaydimi) yoki nafsи lawwama (o'zini qoralayaptimi)? Qaysi biri ko'proq senga yaqin hozir?",
+      "Qachon ichingda haqiqiy tinchlikni sezgandingsan? O'sha lahza... u sanga nimadir aytmoqchi edi.",
+      "Bu kurash — sen bilan o'zingning qaysi qisming o'rtasida? Ular kelisha oladimi?",
+    ],
+    muhasabah:[
+      "Bu kun oxirida — o'zingdan mamnunmisanmi? Bir narsa bo'ldi — sen u haqida qanday his qilyapsan?",
+      "Bugun qilgan eng yaxshi ishingni ayt. Va bir o'zgartirgingiz keladigani.",
+      "Ichingdagi eng yashirin xohish — u seni qayoqqa olib bormoqda? Yaxshilikka yoki zaiflikka?",
+      "O'zingga nisbatan adolatli bo'lyapsanmi? Boshqalarga qo'ygan talabingni o'zingga ham qo'yasan-а?",
+      "Bu suhbatda biror narsa o'zgardimi ichingda? Hech bo'lmasa — bir so'z, bir his?",
+    ],
+    muraqabah:[
+      "Hozir qalbingda nima bor? Atrofdagi shovqinni o'chirib, faqat ichingga qarasang...",
+      "Bu lahzada — nafas olyapsanmi? To'la, erkin? Yoki siqilganmi?",
+      "Ichingdagi eng tinch joyga bor. U yerda nima ko'rasan?",
+      "Ko'zguning oldida tursan — o'zingni ko'rasanmi? Yoki ko'rmoqni xohlamaysanmi?",
+      "Bu his sening qaysi tomoningdan kelmoqda — boshingdanmi yoki yuragingdanmi?",
+    ]
+  },
+  ru:{
+    anger:[
+      "Злость... откуда она? Что-то или кто-то?",
+      "Что прячется под этой злостью? Часто там что-то глубже.",
+      "Злость тебя защищает — от чего? Какую уязвимость скрывает?",
+      "Эта злость — на кого направлена? На человека, ситуацию... или на себя?",
+      "Когда злишься — чего на самом деле хочешь? Что нужно тебе в этот момент?",
+      "В момент злости — чувствуешь, что тебя видят? Или всё равно один?",
+    ],
+    sadness:[
+      "Грусть... когда она самая тяжёлая? В какое время, в каком месте?",
+      "Ты делился этой грустью с кем-то? Или нёс один?",
+      "О чём эта грусть? Что она пытается тебе напомнить?",
+      "Эту тяжесть внутри — кто-нибудь видел? Или ты прятал?",
+      "Эта грусть — только про сейчас, или она давно с тобой?",
+      "Когда плачешь — что-то отпускает? Или ничего не меняется?",
+    ],
+    fear:[
+      "Этот страх — когда он появился? Когда ты впервые это почувствовал?",
+      "Что находится по ту сторону страха? От чего он тебя оберегает?",
+      "Как этот страх изменил твои решения в жизни?",
+      "Если бы страха не было — кем бы ты был?",
+      "Этот страх — кто-то знает о нём? Или носишь один?",
+      "Страх и осторожность — где для тебя граница?",
+    ],
+    loneliness:[
+      "Это одиночество — потому что нет людей, или потому что тебя не понимают?",
+      "Кто должен был понять тебя лучше всех?",
+      "Когда ты впервые почувствовал это одиночество? В каком возрасте?",
+      "Если бы кто-то увидел тебя настоящего — уставшего, уязвимого — что бы ты почувствовал?",
+      "Одиночество и непонятость — это разные вещи. Что больше у тебя?",
+      "Был ли момент, когда ты чувствовал себя по-настоящему понятым? С кем, где?",
+    ],
+    shame:[
+      "Этот стыд... откуда он? Какое-то событие, человек?",
+      "Что стыд прячет в тебе? Что старается не быть видимым?",
+      "Кто научил тебя этому стыду? Или он вырос сам?",
+      "От кого прячет тебя стыд — от людей или от себя?",
+      "Без этого стыда — каким бы ты был?",
+    ],
+    guilt:[
+      "Это чувство вины... когда оно появилось?",
+      "Тогда ты делал что мог. Можешь ли это увидеть?",
+      "Что даёт тебе эта вина? И что забирает?",
+      "Простить — это не оправдать. Это просто снять груз. Ты готов?",
+    ],
+    generic:[
+      "Расскажи больше. Хочу увидеть, что происходит внутри тебя.",
+      "Какую часть тебя это показывает? Ту, которую обычно не видят?",
+      "Что ещё есть внутри прямо сейчас? Рядом с этим чувством?",
+      "Что это чувство пытается тебе сказать? Если прислушаться...",
+      "Когда ты чувствуешь себя наиболее собой?",
+      "Что бы ты сказал себе в этой ситуации?",
+      "Это чувство знакомо — оно приходило и раньше?",
+      "Где в теле ты ощущаешь это — в груди, горле, животе?",
+      "Ты сейчас говоришь для себя — или отчитываешься перед кем-то?",
+      "Когда это чувство — хочется сбежать или, наоборот, погрузиться?",
+    ],
+    deepening:[
+      "О детстве. Дома было безопасно выражать чувства открыто?",
+      "Тот, кто должен был понять тебя лучше всех... не понял. Кто это был?",
+      "Когда ты впервые решил, что нужно прятать себя?",
+      "Тому маленькому ребёнку — что бы ты сказал сейчас?",
+      "С каких пор для тебя важно выглядеть сильным?",
+      "Любовь в твоём детстве — как она выглядела? Слова, прикосновения, поступки?",
+    ],
+    mirror:[
+      "Зеркало видит тебя...\n\nТы выглядишь сильным. Но эта сила иногда — броня, чтобы скрыть внутреннюю нежность.\n\n*В самые жёсткие моменты* — о чём плачет что-то внутри?",
+      "Зеркало показывает...\n\nТы несёшь очень много — и стараешься не показывать.\n\n*Почему показывать опасно?*",
+      "Я кое-что вижу...\n\nТы очень строг к себе. Но уязвимость — это самое человечное, что в нас есть.\n\n*Когда последний раз ты принял свою уязвимость?*",
+    ],
+    // Скрытый слой: муракаба и мухасаба (по принципам Абдулкадира Иса р.х.)
+    nafs:[
+      "Что сейчас говорит тебе голос внутри? И ты подчиняешься ему — или сопротивляешься?",
+      "Это желание — из сердца или из эго? Одно приносит покой, другое — тревогу.",
+      "Ты осуждаешь себя сейчас? Это осуждение — признак пробуждения. Его можно превратить в силу.",
+      "Как бы ты назвал своё нынешнее состояние: душа, тянущая вниз, или душа, упрекающая себя? Что ближе к тебе?",
+      "Когда ты последний раз ощущал внутренний покой? Что происходило в тот момент?",
+      "Эта борьба — между какими частями тебя? Могут ли они договориться?",
+    ],
+    muhasabah:[
+      "В конце этого дня — ты доволен собой? Одно событие — как ты к нему относишься?",
+      "Скажи мне лучшее, что ты сделал сегодня. И одно, что хотел бы изменить.",
+      "Твоё самое скрытое желание — куда оно тебя ведёт? К росту или к слабости?",
+      "Ты справедлив к себе? Требования, которые ты предъявляешь к другим — применяешь ли к себе?",
+      "В этом разговоре — что-то изменилось внутри? Хоть одно слово, один момент?",
+    ],
+    muraqabah:[
+      "Что сейчас в твоём сердце? Отключи шум снаружи — и просто посмотри внутрь...",
+      "В эту минуту — ты дышишь? Полно, свободно? Или сжато?",
+      "Найди самое тихое место внутри себя. Что ты там видишь?",
+      "Если встать перед зеркалом — ты видишь себя? Или не хочешь смотреть?",
+      "Это чувство — откуда оно идёт: из головы или из сердца?",
+    ]
+  }
+};
+
 function getDemoResponse(userText){
-  const flow=DEMO_FLOW[state.lang]||DEMO_FLOW.uz;
-  const mc=state.messageCount;
   detectEmotions(userText);
-  if(mc===0){state.stage=1;return flow[0][0];}
-  if(mc<=2){state.stage=1;return flow[1][Math.min(mc-1,flow[1].length-1)];}
-  if(mc<=6){state.stage=2;return flow[2][Math.min(mc-3,flow[2].length-1)];}
-  if(mc===7){state.stage=3;return flow[3][0];}
-  state.stage=4;return null;
+  const mc=state.messageCount;
+  const lang=state.lang;
+  const lower=userText.toLowerCase();
+  const r=SMART_RESPONSES[lang]||SMART_RESPONSES.uz;
+
+  // Show tasks after 18 messages
+  if(mc>=18){state.stage=5;return null;}
+
+  // Ruh (soul) stage: messages 14-17 — nafs/muhasabah/muraqabah layer
+  if(mc>=14){
+    state.stage=4;
+    const sufiBuckets=[r.nafs,r.muraqabah,r.muhasabah,r.nafs];
+    const bucket=sufiBuckets[(mc-14)%sufiBuckets.length];
+    return bucket[(mc-14)%bucket.length];
+  }
+
+  // Mirror stage: messages 11-13
+  if(mc>=11){
+    state.stage=3;
+    const pool=r.mirror;
+    return pool[(mc-11)%pool.length];
+  }
+
+  // Deepening stage: messages 7-10
+  if(mc>=7){
+    state.stage=2;
+    const pool=r.deepening;
+    return pool[(mc-7)%pool.length];
+  }
+
+  // Stage 1-2: messages 1-6 — respond to detected emotion
+  if(mc<=3) state.stage=1; else state.stage=2;
+
+  // Detect emotion from current message
+  const kw=EKW[lang]||EKW.uz;
+  const emotionOrder=['anger','sadness','fear','loneliness','shame','guilt'];
+  let detected=null;
+  for(const e of emotionOrder){
+    if(kw[e]&&kw[e].some(w=>lower.includes(w))){detected=e;break;}
+  }
+  // Fall back to dominant historical emotion
+  if(!detected){
+    const dominant=Object.entries(state.emotionalThemes).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if(dominant&&r[dominant])detected=dominant;
+  }
+
+  const pool=(detected&&r[detected])?r[detected]:r.generic;
+  // Use messageCount to cycle through pool without repeating too fast
+  return pool[mc%pool.length];
 }
 
 const TASKS_DB = {
@@ -556,10 +791,10 @@ function showTyping(){
 function hideTyping(){document.getElementById('typing-indicator')?.remove();}
 
 function updateStageUI(){
-  const names={uz:['Tanishuv','Chuqurlashish','Ko\'zgu','Vazifalar'],ru:['Знакомство','Погружение','Зеркало','Задания']};
-  const n=(names[state.lang]||names.uz)[state.stage-1];
+  const names={uz:['Tanishuv','Chuqurlashish','Ko\'zgu','Ruh','Vazifalar'],ru:['Знакомство','Погружение','Зеркало','Душа','Задания']};
+  const n=(names[state.lang]||names.uz)[Math.min(state.stage-1,4)];
   const el=document.getElementById('stage-indicator');
-  if(el)el.innerHTML=`Bosqich ${state.stage}/4<br><span style="color:var(--accent2)">${n}</span>`;
+  if(el)el.innerHTML=`Bosqich ${state.stage}/5<br><span style="color:var(--accent2)">${n}</span>`;
 }
 
 async function sendMessage(){
@@ -608,7 +843,7 @@ async function sendMessage(){
         saveStats({sessions:1});saveState();updateProfileUI();
         setTimeout(showTasksScreen,2000);
       } else {
-        appendMessage('ai',aiText,state.stage===3);
+        appendMessage('ai',aiText,state.stage>=3);
         updateStageUI();
       }
     }
