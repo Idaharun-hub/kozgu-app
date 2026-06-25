@@ -379,6 +379,22 @@ let state = {
   lang:'uz', stage:1, messageCount:0,
   emotionalThemes:{}, scores:{V:0,G:0,H:0,W:0},
   tasks:[], insight:'', aiWaiting:false,
+  askingName:true, customName:'', introQ:0,
+};
+
+const INTRO_QUESTIONS = {
+  uz:[
+    q=>`${q}, salom 🙂\n\nKe, sen bilan ozgina suhbatlashamiz.\n\nAytchi — bugun qanday kun o'tdi? Yaxshimi, og'irmi, shunchaki o'tdimi?`,
+    `Tushunarli...\n\nHozir hayotingda eng ko'p nimaniyam o'ylaysan? Qaysi narsa miyangda "aylanaverar" deya ketmaydi?`,
+    `Bir savol so'rasam...\n\nSo'nggi marta qachon ichingda haqiqiy tinchlik bo'lgan — hech narsa bosmasdi, hech kim kutmasdi, shunchaki yaxshi edi?`,
+    `Va oxirgi savol...\n\nO'zingiz haqingizda atrofdagilar bilmaydigan, lekin kimdir bilsa yaxshi bo'lardi degan bir narsa bormi?`,
+  ],
+  ru:[
+    q=>`${q}, привет 🙂\n\nДавай немного поговорим.\n\nКак прошёл сегодняшний день? Хорошо, тяжело, или просто прошёл?`,
+    `Понятно...\n\nЧто сейчас крутится в голове чаще всего? Какая мысль не даёт покоя?`,
+    `Спрошу тебя кое-что...\n\nКогда последний раз внутри было настоящее спокойствие — ничто не давило, никто не ждал, просто было хорошо?`,
+    `И последний вопрос...\n\nЕсть что-то о тебе, чего окружающие не знают, но ты бы хотел(а) чтобы кто-то знал?`,
+  ],
 };
 
 const DEMO_FLOW = {
@@ -761,9 +777,12 @@ function setLang(l,btn){
 function startJourney(){
   showScreen('chat',true);
   document.getElementById('nav').classList.add('visible');
+  state.askingName=true; state.customName=''; state.introQ=0; state.messageCount=0;
   setTimeout(()=>{
-    appendMessage('ai',DEMO_FLOW[state.lang][0][0]);
-    state.messageCount=0;
+    const msg=state.lang==='uz'
+      ?`Assalomu alaykum! Men Ko'zgu — sen bilan suhbatlashadigan ko'zgu.\n\nAvval tanishaylik — ismingiz nima?`
+      :`Привет! Я — Ko'zgu, твоё внутреннее зеркало.\n\nДавай познакомимся — как тебя зовут?`;
+    appendMessage('ai',msg);
   },500);
 }
 
@@ -803,9 +822,57 @@ async function sendMessage(){
   if(!text||state.aiWaiting)return;
   input.value='';input.style.height='auto';
   appendMessage('user',text);
-  state.messageCount++;
   state.aiWaiting=true;
   document.getElementById('send-btn').disabled=true;
+
+  // === ISM SO'RASH ===
+  if(state.askingName){
+    state.customName=text.trim().split(' ')[0];
+    state.askingName=false;
+    await new Promise(r=>setTimeout(r,400));
+    showTyping();
+    await new Promise(r=>setTimeout(r,1000));
+    hideTyping();
+    const q=INTRO_QUESTIONS[state.lang];
+    appendMessage('ai', typeof q[0]==='function'?q[0](state.customName):q[0]);
+    state.introQ=1;
+    state.aiWaiting=false;
+    document.getElementById('send-btn').disabled=false;
+    return;
+  }
+
+  // === INTRO 4 SAVOL ===
+  if(state.introQ>0 && state.introQ<4){
+    await new Promise(r=>setTimeout(r,400));
+    showTyping();
+    await new Promise(r=>setTimeout(r,1200+Math.random()*600));
+    hideTyping();
+    const q=INTRO_QUESTIONS[state.lang];
+    const next=q[state.introQ];
+    appendMessage('ai', typeof next==='function'?next(state.customName):next);
+    state.introQ++;
+    state.aiWaiting=false;
+    document.getElementById('send-btn').disabled=false;
+    return;
+  }
+
+  // === INTRO TUGADI — asosiy suhbatga o'tish ===
+  if(state.introQ===4){
+    state.introQ=0; state.messageCount=0;
+    await new Promise(r=>setTimeout(r,400));
+    showTyping();
+    await new Promise(r=>setTimeout(r,1000));
+    hideTyping();
+    const bridge=state.lang==='uz'
+      ?`${state.customName}, raxmat ochiqligingiz uchun.\n\nEndi chuqurroq ketamiz — sen bilan ko'zgu o'yini boshlanadi. Tayyor bo'lsang davom et.`
+      :`${state.customName}, спасибо за открытость.\n\nТеперь пойдём глубже — начинается игра с зеркалом. Продолжай, когда будешь готов.`;
+    appendMessage('ai',bridge,true);
+    state.aiWaiting=false;
+    document.getElementById('send-btn').disabled=false;
+    return;
+  }
+
+  state.messageCount++;
   detectEmotions(text);
   await new Promise(r=>setTimeout(r,400));
   showTyping();
