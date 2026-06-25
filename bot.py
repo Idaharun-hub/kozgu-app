@@ -4,6 +4,7 @@ Ishga tushirish: python bot.py
 """
 import asyncio, logging, os, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import aiohttp
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -15,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 BOT_TOKEN    = os.environ.get("BOT_TOKEN", "8348385427:AAEUYQ_7EKMHagca4cGLXHARguoFa48qtZg")
 MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://idaharun-hub.github.io/kozgu-app/")
+RENDER_URL   = os.environ.get("RENDER_URL", "https://kozgu-app.onrender.com")
 PORT         = int(os.environ.get("PORT", 10000))
 
 bot = Bot(token=BOT_TOKEN)
@@ -56,6 +58,7 @@ async def any_msg(msg: Message):
         hint = "Нажмите кнопку ниже, чтобы открыть Ko'zgu 👇"
     await msg.answer(hint, reply_markup=main_keyboard(lang))
 
+# ─── Health check server ───────────────────────────────────────────────────────
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -70,9 +73,24 @@ def run_health_server():
     logging.info(f"Health server port {PORT} da ishga tushdi")
     server.serve_forever()
 
+# ─── Self-ping (Render uxlamasligi uchun) ─────────────────────────────────────
+async def self_ping():
+    await asyncio.sleep(60)  # ishga tushgandan 1 daqiqa keyin boshlaydi
+    while True:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(RENDER_URL, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    logging.info(f"Self-ping: {resp.status}")
+        except Exception as e:
+            logging.warning(f"Self-ping xato: {e}")
+        await asyncio.sleep(8 * 60)  # har 8 daqiqada
+
 async def main():
+    # Health server
     t = threading.Thread(target=run_health_server, daemon=True)
     t.start()
+    # Self-ping task
+    asyncio.create_task(self_ping())
     logging.info(f"Ko'zgu boti ishga tushdi | Mini App: {MINI_APP_URL}")
     await dp.start_polling(bot)
 
