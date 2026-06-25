@@ -2,7 +2,8 @@
 Ko'zgu — Foydalanuvchi Boti
 Ishga tushirish: python bot.py
 """
-import asyncio, logging, os
+import asyncio, logging, os, threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -14,6 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 BOT_TOKEN    = os.environ.get("BOT_TOKEN", "8348385427:AAEUYQ_7EKMHagca4cGLXHARguoFa48qtZg")
 MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://idaharun-hub.github.io/kozgu-app/")
+PORT         = int(os.environ.get("PORT", 10000))
 
 bot = Bot(token=BOT_TOKEN)
 dp  = Dispatcher(storage=MemoryStorage())
@@ -54,7 +56,23 @@ async def any_msg(msg: Message):
         hint = "Нажмите кнопку ниже, чтобы открыть Ko'zgu 👇"
     await msg.answer(hint, reply_markup=main_keyboard(lang))
 
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"OK")
+    def log_message(self, *args):
+        pass
+
+def run_health_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    logging.info(f"Health server port {PORT} da ishga tushdi")
+    server.serve_forever()
+
 async def main():
+    t = threading.Thread(target=run_health_server, daemon=True)
+    t.start()
     logging.info(f"Ko'zgu boti ishga tushdi | Mini App: {MINI_APP_URL}")
     await dp.start_polling(bot)
 
