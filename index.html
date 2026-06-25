@@ -37,7 +37,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:-a
 .lang-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(10,186,181,0.1); }
 
 /* CHAT */
-#chat { background:var(--bg); }
+#chat { background:var(--bg); padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)); }
 .chat-header { display:flex; align-items:center; gap:12px; padding:14px 16px 12px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
 .chat-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#007b77); display:flex; align-items:center; justify-content:center; font-size:18px; }
 .chat-header-info h2 { font-size:16px; font-weight:600; }
