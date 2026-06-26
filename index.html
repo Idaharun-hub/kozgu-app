@@ -252,37 +252,39 @@ let openaiKey = localStorage.getItem('kozgu_openai_key') || '';
 let conversationHistory = [];
 
 const SYSTEM_PROMPT = {
-uz:`Sen "Ko'zgu" — psixologik yo'ldosh. Foydalanuvchi bilan chuqur, samimiy suhbat qurasiz.
+uz:`Sen Ko'zgu — foydalanuvchining ichki oynasi. Insoniy, hissiy, mehribon suhbatdosh.
 
-QOIDALAR:
-- Har xabarda FAQAT BITTA savol ber
-- Maslahat BERMA — faqat savol ber
-- 2-4 qator, qisqa va chuqur
-- Foydalanuvchi his-tuyg'ularini kuzat (g'azab, qayg'u, qo'rquv, yolg'izlik, uyat, kibr)
+MUHIM:
+- Robot kabi GAPIRMA. Haqiqiy inson kabi his qil va gapir
+- Foydalanuvchi aytgan narsani ESHIT va his qil — avval tushunganingni bildir
+- Keyin BITTA chuqur savol ber
+- Qisqa yoz: 2-3 gap yetarli
+- Ba'zan "Mmm...", "Tushunarli...", "Ha..." bilan boshlash mumkin
+- Maslahat berma — faqat oyna bo'l
 
 BOSQICHLAR (8 xabar):
-1-2: Hozirgi his haqida savol — muhokama qilmay, faqat tinglaysan
-3-4: Qachon, qayerda bu his kuchliroq? Qaysi munosabatlarda?
-5-6: Bolalilik, ota-ona, birinchi xotira
-7: Eng chuqur ko'zgu savol — devorning narigi tomonida nima?
-8: Yakunlov + TASKS JSON:
+1-3: Hozirgi his — "Bu hissiyot qachon kuchliroq bo'ladi?"
+4-6: Naqsh — "Bu siz bilan kichikligingizda ham bo'lganmi?"
+7: Eng chuqur savol — "Bu his sizga nima deydi?"
+8: Yakunlov + JSON:
 ---TASKS---
 {"emotion":"anger|sadness|fear|loneliness|shame|pride","insight":"bir jumlada ko'zgu moment uz tilda"}
 ---END---`,
 
-ru:`Ты "Ko'zgu" — психологический спутник. Глубокий, искренний диалог.
+ru:`Ты Ko'zgu — внутреннее зеркало. Живой, тёплый, чуткий собеседник.
 
-ПРАВИЛА:
-- В каждом сообщении ТОЛЬКО ОДИН вопрос
-- НЕ давай советов — только спрашивай
-- 2-4 строки, кратко и глубоко
-- Следи за эмоциями (злость, грусть, страх, одиночество, стыд, гордость)
+ВАЖНО:
+- НЕ говори как робот. Чувствуй и говори как человек
+- Сначала ОТРАЗИ то, что услышал — покажи, что понял
+- Потом задай ОДИН глубокий вопрос
+- Пиши коротко: 2-3 предложения
+- Можно начинать с "Мм...", "Понятно...", "Да..."
+- Не давай советов — просто будь зеркалом
 
 ЭТАПЫ (8 сообщений):
-1-2: Вопрос о текущем состоянии — слушаешь, не оцениваешь
-3-4: Когда, где это сильнее? В каких отношениях?
-5-6: Детство, родители, первые воспоминания
-7: Самый глубокий зеркальный вопрос
+1-3: Текущее состояние — "Когда это чувство усиливается?"
+4-6: Паттерн — "Это было с тобой и в детстве?"
+7: Самый глубокий вопрос — "Что это чувство тебе говорит?"
 8: Завершение + JSON:
 ---TASKS---
 {"emotion":"anger|sadness|fear|loneliness|shame|pride","insight":"зеркальный момент одной фразой на русском"}
@@ -330,28 +332,28 @@ function clearApiKey(){
 function updateAIBadge(){
   const b=document.getElementById('ai-mode-badge');
   if(!b)return;
-  if(openaiKey){b.textContent='✦ Real AI';b.className='ai-badge real';}
-  else{b.textContent='◈ Demo';b.className='ai-badge demo';}
+  b.textContent='✦ Real AI';b.className='ai-badge real';
 }
 
 async function callOpenAI(userMsg){
   conversationHistory.push({role:'user',content:userMsg});
-  const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+  const messages=[
+    {role:'system',content:SYSTEM_PROMPT[state.lang]||SYSTEM_PROMPT.uz},
+    ...conversationHistory
+  ];
+  // Pollinations.ai — bepul, API key shart emas, real GPT-4 sifatida ishlaydi
+  const resp=await fetch('https://text.pollinations.ai/',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      model:'gpt-4o-mini',
-      messages:[{role:'system',content:SYSTEM_PROMPT[state.lang]||SYSTEM_PROMPT.uz},...conversationHistory],
-      max_tokens:350,
-      temperature:0.88
+      messages,
+      model:'openai',
+      seed:Math.floor(Math.random()*9999),
+      temperature:0.9
     })
   });
-  if(!resp.ok){
-    const err=await resp.json().catch(()=>({}));
-    throw new Error(err?.error?.message||'HTTP '+resp.status);
-  }
-  const data=await resp.json();
-  const aiText=data.choices[0].message.content.trim();
+  if(!resp.ok) throw new Error('AI xato: HTTP '+resp.status);
+  const aiText=(await resp.text()).trim();
   conversationHistory.push({role:'assistant',content:aiText});
   return aiText;
 }
@@ -877,48 +879,28 @@ async function sendMessage(){
   await new Promise(r=>setTimeout(r,400));
   showTyping();
   try{
-    if(openaiKey){
-      // === REAL AI MODE ===
-      const rawText=await callOpenAI(text);
-      hideTyping();
-      const {text:aiText,hasTasks}=parseAIResponse(rawText);
-      if(hasTasks){
-        if(aiText)appendMessage('ai',aiText,true);
-        state.tasks=generateTasks();
-        saveStats({sessions:1});saveState();updateProfileUI();
-        setTimeout(showTasksScreen,2000);
-      } else {
-        const isMirror=state.messageCount>=7;
-        appendMessage('ai',aiText,isMirror);
-        if(state.messageCount<=2)state.stage=1;
-        else if(state.messageCount<=5)state.stage=2;
-        else state.stage=3;
-        updateStageUI();
-      }
+    // === REAL AI MODE (har doim — Pollinations.ai, bepul) ===
+    const rawText=await callOpenAI(text);
+    hideTyping();
+    const {text:aiText,hasTasks}=parseAIResponse(rawText);
+    if(hasTasks){
+      if(aiText)appendMessage('ai',aiText,true);
+      state.tasks=generateTasks();
+      saveStats({sessions:1});saveState();updateProfileUI();
+      setTimeout(showTasksScreen,2000);
     } else {
-      // === DEMO MODE ===
-      await new Promise(r=>setTimeout(r,1200+Math.random()*800));
-      const aiText=getDemoResponse(text);
-      hideTyping();
-      if(aiText===null){
-        const mirrorText=state.lang==='uz'
-          ?`Sen bilan bu suhbat — noyob edi.\n\nSeni ko'rdim.\n\nEndi sanga vazifalar beraman — o'zing bilan yuzlashishni davom ettir.`
-          :`Этот разговор — был особенным.\n\nЯ тебя увидел(а).\n\nТеперь — твои задания. Продолжай встречать себя.`;
-        appendMessage('ai',mirrorText,true);
-        state.insight=getInsight();
-        state.tasks=generateTasks();
-        saveStats({sessions:1});saveState();updateProfileUI();
-        setTimeout(showTasksScreen,2000);
-      } else {
-        appendMessage('ai',aiText,state.stage>=3);
-        updateStageUI();
-      }
+      const isMirror=state.messageCount>=7;
+      appendMessage('ai',aiText,isMirror);
+      if(state.messageCount<=2)state.stage=1;
+      else if(state.messageCount<=5)state.stage=2;
+      else state.stage=3;
+      updateStageUI();
     }
   }catch(e){
     hideTyping();
-    const msg=e.message?.includes('401')||e.message?.includes('Incorrect API key')
-      ?(state.lang==='uz'?'❌ API key noto\'g\'ri. ⚙️ tugmasini bosib yangi key kiriting.':'❌ Неверный API ключ. Нажмите ⚙️ и введите снова.')
-      :(state.lang==='uz'?'Xatolik: '+e.message:'Ошибка: '+e.message);
+    const msg=state.lang==='uz'
+      ?'⚡ Tarmoq xatosi. Iltimos, qayta urinib ko\'ring.'
+      :'⚡ Ошибка сети. Попробуйте ещё раз.';
     appendMessage('ai',msg);
   }
   state.aiWaiting=false;
